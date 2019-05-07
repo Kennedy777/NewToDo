@@ -44,6 +44,6 @@ namespace ToDoList.Models
       public static List<Category> GetAll()
       {
           return _instances;
-      } 
+      }
   }
 }
