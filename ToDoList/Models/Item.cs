@@ -1,18 +1,21 @@
 using System;
 using System.Collections.Generic;
 using MySql.Data.MySqlClient;
+using System.Globalization;
 
 namespace ToDoList.Models
 {
   public class Item
   {
       private string _description;
+      private DateTime _due;
       private int _id;
 
-      public Item (string description, int id = 0)
+      public Item (string description, DateTime due, int id = 0)
       {
           _description = description;
           _id = id;
+          _due = due;
       }
       public string GetDescription()
       {
@@ -22,11 +25,21 @@ namespace ToDoList.Models
       {
         return 0;
       }
-      public void SetDescription(string newDiscription)
+      public DateTime GetDueDate()
       {
-        _description = newDiscription;
+        return _due;
       }
-      
+
+      public void SetDescription(string newDescription)
+      {
+        _description = newDescription;
+      }
+
+      public void SetDueDate(DateTime due)
+      {
+        _due = due;
+      }
+
       public static List<Item> GetAll()
       {
           List<Item> allItems = new List<Item> {};
@@ -37,10 +50,11 @@ namespace ToDoList.Models
           MySqlDataReader rdr = cmd.ExecuteReader() as MySqlDataReader;
           while(rdr.Read())
           {
-              int itemId = rdr.GetInt32(0);
-              string itemDescription = rdr.GetString(1);
-              Item newItem = new Item(itemDescription, itemId);
-              allItems.Add(newItem);
+              int id = rdr.GetInt32(0);
+              string description = rdr.GetString(1);
+              DateTime due = rdr.GetDateTime(2);
+              Item item = new Item(description, due, id);
+              allItems.Add(item);
           }
           conn.Close();
           if (conn != null)
@@ -68,29 +82,57 @@ namespace ToDoList.Models
         {
           return false;
         }
-        else 
+        else
         {
-          Item newItem = (Item) otherItem;
-          bool idEquality = (this.GetId() == newItem.GetId());
-          bool descriptionEquality = (this.GetDescription() == newItem.GetDescription());
+          Item item = (Item) otherItem;
+          bool idEquality = (this.GetId() == item.GetId());
+          bool descriptionEquality = (this.GetDescription() == item.GetDescription());
           return (idEquality && descriptionEquality);
         }
       }
-      public static Item Find(int searchId)
+      public static Item Find(int itemId)
       {
-        Item dummyItem = new Item("dummy item");
-        return dummyItem;
+        MySqlConnection conn = DB.Connection();
+        conn.Open();
+        var cmd = conn.CreateCommand() as MySqlCommand;
+        cmd.CommandText = @"SELECT * FROM `items` WHERE itemId = @thisId;";
+        MySqlParameter thisId = new MySqlParameter();
+        thisId.ParameterName = "@thisId";
+        thisId.Value = itemId;
+        cmd.Parameters.Add(thisId);
+        var rdr = cmd.ExecuteReader() as MySqlDataReader;
+        int id = 0;
+        string description = "";
+        DateTime due = new DateTime();
+        while (rdr.Read())
+        {
+          id = rdr.GetInt32(0);
+          description = rdr.GetString(1);
+          due = rdr.GetDateTime(2);
+        }
+        Item foundItem = new Item(description, due, id);
+
+        conn.Close();
+        if (conn != null)
+        {
+          conn.Dispose();
+        }
+        return foundItem;
       }
       public void Save()
       {
         MySqlConnection conn = DB.Connection();
         conn.Open();
         var cmd = conn.CreateCommand() as MySqlCommand;
-        cmd.CommandText = @"INSERT INTO items (description) VALUES (@ItemDescription);";
+        cmd.CommandText = @"INSERT INTO items (description, due) VALUES (@ItemDescription, @due);";
         MySqlParameter description = new MySqlParameter();
         description.ParameterName = "@ItemDescription";
         description.Value = this._description;
+        MySqlParameter due = new MySqlParameter();
+        due.ParameterName = "@due";
+        due.Value = this._due;
         cmd.Parameters.Add(description);
+        cmd.Parameters.Add(due);
         cmd.ExecuteNonQuery();
         _id = (int) cmd.LastInsertedId;
 
@@ -100,5 +142,7 @@ namespace ToDoList.Models
           conn.Dispose();
         }
       }
+
+
   }
 }

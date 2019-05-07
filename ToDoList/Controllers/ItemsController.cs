@@ -29,5 +29,14 @@ namespace ToDoList.Controllers
         model.Add("category", category);
         return View(model);
     }
+    [HttpGet("/items")]
+    public ActionResult Index()
+    {
+      List<Item> allItems = Item.GetAll();
+      return View(allItems);
+    }
+
+
+
   }
 }

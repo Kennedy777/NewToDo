@@ -33,6 +33,15 @@ namespace ToDoList.Tests
       Assert.AreEqual(description, result);
     }
 
+    // [TestMethod]
+    // public void GetDueDate_ReturnsDueDate_String()
+    // {
+    //   string dueDate = "05/12/2019";
+    //   Item newItem = new Item(dueDate);
+    //   string result = newItem.GetDueDate();
+    //   Assert.AreEqual(dueDate, result);
+    // }
+
     [TestMethod]
     public void SetDescription_SetDescription_String()
     {
